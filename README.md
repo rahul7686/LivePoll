@@ -23,8 +23,12 @@ This project satisfies the Level 2 live poll idea with:
 ## Deployed Contract
 
 - Contract ID: `CC43GCB3LMRLKQ6JFJCPNT2QJXVOK73Y5HWAF7RZAYIMRL322I7WIZ6L`
+- Deploy transaction hash:
+  `d7a8f8f378e8813c45db34e28e0721c11758c990564fe6864eb61753edfbf418`
 - Deploy transaction:
   `https://stellar.expert/explorer/testnet/tx/d7a8f8f378e8813c45db34e28e0721c11758c990564fe6864eb61753edfbf418`
+- Verified contract call hash:
+  `3c9004799722dc8dc79781602aef11f4e987b843d9d185183f45a478826f49dc`
 - Verified contract call transaction:
   `https://stellar.expert/explorer/testnet/tx/3c9004799722dc8dc79781602aef11f4e987b843d9d185183f45a478826f49dc`
 
@@ -47,6 +51,7 @@ npm run dev
 ```
 
 Open `https://localhost:5173/` and accept the local HTTPS warning once if your browser asks.
+The Vite scripts use the native config loader so the app builds cleanly in this Windows + OneDrive workspace.
 
 ### Wallet
 
@@ -82,6 +87,17 @@ cargo build --target wasm32v1-none --release
 - Frontend app: `live-poll-website/src/App.jsx`
 - Contract client helpers: `live-poll-website/src/lib/pollClient.js`
 - Wallet integration: `live-poll-website/src/lib/walletKit.js`
+
+## Verification
+
+```powershell
+cd live-poll-contract
+cargo test
+
+cd ../live-poll-website
+npm run lint
+npm run build
+```
 
 ## Submission Notes
 

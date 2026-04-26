@@ -1,6 +1,7 @@
 **/node_modules/
 **/dist/
 **/target/
+**/test_snapshots/
 **/.vite/
 .chrome-headless/
 .edge-headless/
