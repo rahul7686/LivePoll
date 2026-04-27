@@ -38,7 +38,7 @@ Optional public deployment: not deployed yet. Local HTTPS dev server runs at `ht
 
 ## Wallet Selector Screenshot
 
-![Wallet selector](./docs/wallet-options.png)
+![Wallet selector](./docs/wallet-selector.png)
 
 ## Local Setup
 
