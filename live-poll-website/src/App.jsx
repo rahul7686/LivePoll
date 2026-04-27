@@ -172,9 +172,14 @@ function App() {
     [selectedWalletId, supportedWallets],
   )
 
-  const availableWalletCount = useMemo(
-    () => supportedWallets.filter(({ isAvailable }) => isAvailable).length,
+  const availableWallets = useMemo(
+    () => supportedWallets.filter(({ isAvailable }) => isAvailable),
     [supportedWallets],
+  )
+
+  const availableWalletCount = useMemo(
+    () => availableWallets.length,
+    [availableWallets],
   )
 
   const totalVotes = useMemo(
@@ -281,6 +286,13 @@ function App() {
       initWalletKit()
       const wallets = await StellarWalletsKit.refreshSupportedWallets()
       setSupportedWallets(wallets)
+      setSelectedWalletId((currentWalletId) => {
+        if (wallets.some(({ id }) => id === currentWalletId)) {
+          return currentWalletId
+        }
+
+        return wallets.find(({ isAvailable }) => isAvailable)?.id ?? wallets[0]?.id ?? ''
+      })
     } catch (error) {
       setWalletError(formatError(error))
     } finally {
@@ -365,7 +377,6 @@ function App() {
       setWalletAddress('')
       setWalletPassphrase('')
       setWalletNetwork('')
-      setSelectedWalletId('')
     } catch (error) {
       setWalletError(formatError(error))
     }
@@ -525,7 +536,6 @@ function App() {
         setWalletAddress('')
         setWalletPassphrase('')
         setWalletNetwork('')
-        setSelectedWalletId('')
       },
     )
 
@@ -788,8 +798,8 @@ function App() {
             <div>
               <h2>Wallet options</h2>
               <p>
-                Multi-wallet support is powered by StellarWalletsKit. Available
-                wallets can connect directly from this page.
+                Multi-wallet support is powered by StellarWalletsKit. Choose one
+                wallet from the menu, then connect with a single action.
               </p>
             </div>
             <span className="network-pill">
@@ -802,58 +812,80 @@ function App() {
             <div className="notice error-notice">{walletError}</div>
           ) : null}
 
-          <div className="wallet-grid">
-            {supportedWallets.map((wallet) => {
-              const isSelected = selectedWalletId === wallet.id
-              const isConnectedWallet =
-                isSelected && isWalletConnected && selectedWallet?.id === wallet.id
-
-              return (
-                <article
-                  key={wallet.id}
-                  className={`wallet-option ${isSelected ? 'selected' : ''} ${
-                    wallet.isAvailable ? '' : 'unavailable'
-                  }`}
+          <div className="wallet-picker-panel">
+            <div className="wallet-picker-controls">
+              <label className="wallet-select-field" htmlFor="wallet-picker">
+                <span>Choose wallet</span>
+                <select
+                  id="wallet-picker"
+                  className="wallet-select"
+                  value={selectedWalletId}
+                  onChange={(event) => {
+                    setSelectedWalletId(event.target.value)
+                    setWalletError('')
+                  }}
+                  disabled={isLoadingWallets || !supportedWallets.length}
                 >
-                  <div className="wallet-option-top">
-                    <div>
-                      <h3>{wallet.name}</h3>
-                      <p className="wallet-meta">{wallet.type}</p>
-                    </div>
-                    <span
-                      className={`availability-pill tone-${
-                        wallet.isAvailable ? 'success' : 'muted'
-                      }`}
-                    >
-                      {wallet.isAvailable ? 'Available' : 'Not found'}
-                    </span>
-                  </div>
+                  {supportedWallets.length ? null : (
+                    <option value="">No wallets found</option>
+                  )}
+                  {supportedWallets.map((wallet) => (
+                    <option key={wallet.id} value={wallet.id}>
+                      {wallet.name} · {wallet.isAvailable ? 'Available' : 'Not found'}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-                  <div className="wallet-option-actions">
-                    <button
-                      type="button"
-                      className="vote-button"
-                      onClick={() => connectWallet(wallet)}
-                      disabled={
-                        Boolean(isConnectingWalletId) &&
-                        isConnectingWalletId !== wallet.id
-                      }
-                    >
-                      {isConnectingWalletId === wallet.id
-                        ? 'Connecting...'
-                        : isConnectedWallet
-                          ? 'Reconnect'
-                          : wallet.isAvailable
-                            ? 'Connect'
-                            : 'Check wallet'}
-                    </button>
-                    <a href={wallet.url} target="_blank" rel="noreferrer">
-                      Open wallet page
-                    </a>
-                  </div>
-                </article>
-              )
-            })}
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => connectWallet(selectedWallet)}
+                disabled={
+                  !selectedWallet?.isAvailable || Boolean(isConnectingWalletId)
+                }
+              >
+                {isConnectingWalletId === selectedWallet?.id
+                  ? 'Connecting...'
+                  : isWalletConnected && selectedWallet?.id === selectedWalletId
+                    ? `Reconnect ${selectedWallet?.name ?? 'wallet'}`
+                    : `Connect ${selectedWallet?.name ?? 'wallet'}`}
+              </button>
+            </div>
+
+            <div className="wallet-selection-meta">
+              <div className="wallet-selection-copy">
+                <h3>{selectedWallet?.name || 'No wallet selected'}</h3>
+                <p className="wallet-meta">
+                  {selectedWallet
+                    ? `${selectedWallet.type} wallet`
+                    : 'Refresh wallets to detect supported browser extensions.'}
+                </p>
+              </div>
+              <span
+                className={`availability-pill tone-${
+                  selectedWallet?.isAvailable ? 'success' : 'muted'
+                }`}
+              >
+                {selectedWallet?.isAvailable ? 'Available' : 'Not found'}
+              </span>
+            </div>
+
+            <div className="wallet-selection-actions">
+              <p className="muted">
+                {availableWalletCount
+                  ? `Detected ${availableWalletCount} ready wallet${
+                      availableWalletCount === 1 ? '' : 's'
+                    } in this browser.`
+                  : 'No supported wallet is ready in this browser yet.'}
+              </p>
+
+              {selectedWallet?.url ? (
+                <a href={selectedWallet.url} target="_blank" rel="noreferrer">
+                  Open wallet page
+                </a>
+              ) : null}
+            </div>
           </div>
         </div>
       </section>
